@@ -1,0 +1,814 @@
+/* ================================================================
+   RESPONSIVE.CSS — EasyPresence v2 Professional Responsive System
+   
+   Breakpoints Matrix:
+     - 4K / Ultra-wide : min-width: 1920px
+     - Desktop Standard : 1440px - 1919px
+     - Laptops          : 1024px - 1439px
+     - Tablets          : 768px  - 1023px
+     - Phablets / Large : 480px  - 767px
+     - Standard Phones  : 376px  - 479px
+     - Compact Phones   : 320px  - 375px
+   ================================================================ */
+
+/* ----------------------------------------------------------------
+   1. GLOBAL FOUNDATIONS & MOBILE GUARDS
+   ---------------------------------------------------------------- */
+html, body {
+  max-width: 100vw;
+  overflow-x: clip;
+}
+
+/* Safe-area insets for modern mobile displays (notches, dynamic islands) */
+.topbar {
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+
+.sidebar {
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  padding-left: max(10px, env(safe-area-inset-left));
+}
+
+.toast-container {
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: auto;
+}
+
+/* Sidebar Backdrop Overlay for Mobile / Tablet drawer */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 7, 13, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 90;
+  cursor: pointer;
+  transition: opacity var(--transition-normal);
+}
+.sidebar-overlay.active {
+  display: block;
+}
+
+/* Universal table fluid wrap */
+.table-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+/* ----------------------------------------------------------------
+   2. ULTRA-WIDE & 4K DISPLAYS (≥ 1920px)
+   ---------------------------------------------------------------- */
+@media (min-width: 1920px) {
+  .sidebar {
+    width: 260px;
+  }
+  .view-container {
+    padding: 32px 48px;
+    max-width: 1800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .kpi-value {
+    font-size: 2.5rem;
+  }
+  .kpi-card {
+    padding: 22px;
+  }
+  .rc-candidate-card {
+    padding: 20px 24px;
+    margin-bottom: 14px;
+  }
+}
+
+/* ----------------------------------------------------------------
+   3. LARGE DESKTOP & MONITORS (1440px – 1919px)
+   ---------------------------------------------------------------- */
+@media (min-width: 1440px) and (max-width: 1919px) {
+  .sidebar {
+    width: 250px;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .view-container {
+    padding: 24px 32px;
+  }
+}
+
+/* ----------------------------------------------------------------
+   4. LAPTOPS & COMPACT DESKTOPS (1024px – 1439px)
+   ---------------------------------------------------------------- */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .sidebar {
+    width: 230px;
+  }
+  .topbar-stats {
+    font-size: 0.74rem;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .kpi-value {
+    font-size: 1.85rem;
+  }
+  .view-container {
+    padding: 20px 24px;
+  }
+}
+
+/* ----------------------------------------------------------------
+   5. TABLETS & TOUCH LAPTOPS (768px – 1023px)
+      Sidebar becomes a smooth off-canvas drawer to liberate
+      the entire screen for tables, search, and workflows!
+   ---------------------------------------------------------------- */
+@media (max-width: 1023px) {
+  /* Dynamic viewport height */
+  body {
+    overflow: auto;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  #app-container {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+    flex-direction: column;
+  }
+
+  /* OFF-CANVAS SIDEBAR */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
+    height: 100dvh;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-xl);
+    z-index: 100;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* TOPBAR */
+  .topbar {
+    height: 54px;
+    padding: 0 16px;
+  }
+  .menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: var(--radius-sm);
+  }
+  .topbar-brand {
+    display: block;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+  .topbar-lan {
+    display: none;
+  }
+  .topbar-stats {
+    display: none;
+  }
+
+  /* MAIN WORKSPACE */
+  .main-content {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+    width: 100%;
+  }
+  .view-container {
+    padding: 18px 20px;
+    overflow-y: visible;
+    flex: none;
+  }
+
+  /* KPIS: 2x2 grid */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .kpi-value {
+    font-size: 1.7rem;
+  }
+
+  /* TABLES & TOOLBARS */
+  .table-toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .table-filter-group {
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+  .table-search-wrap {
+    flex: 1 1 240px;
+    width: 100%;
+  }
+
+  /* CARDS GRID */
+  .export-cards-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .settings-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .dashboard-detail-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+  }
+}
+
+/* ----------------------------------------------------------------
+   6. SMARTPHONES & PHABLETS (≤ 767px)
+      Refined mobile-first touch UI with tactile buttons
+   ---------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .view-container {
+    padding: 14px 14px 24px;
+  }
+
+  /* HEADER */
+  .view-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .view-title-group h1 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+  .view-title-group p {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+  .view-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* TOPBAR BADGES */
+  .topbar-admin-badge {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+  .topbar-active-day {
+    font-size: 0.72rem;
+    padding: 3px 9px;
+    max-width: 150px;
+  }
+  #topbar-active-day-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* SEARCH BAR */
+  .search-page {
+    height: auto;
+    gap: 12px;
+  }
+  .search-box {
+    padding: 12px 14px;
+    border-radius: var(--radius-lg);
+  }
+  .search-field {
+    font-size: 1rem !important; /* Strictly 16px to prevent iOS auto-zoom */
+    padding: 14px 44px 14px 44px;
+    min-height: 48px;
+  }
+  .search-field::placeholder {
+    font-size: 0.88rem;
+  }
+  .search-clear {
+    width: 40px;
+    height: 40px;
+  }
+  .results-list {
+    overflow-y: visible;
+    flex: none;
+  }
+
+  /* STATS BAR: 2x2 Clean Mobile Matrix */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    padding: 10px 14px;
+  }
+  .stat-divider {
+    display: none;
+  }
+  .stat-spacer {
+    display: none;
+  }
+  .stat-pill {
+    font-size: 0.82rem;
+    min-width: 0;
+  }
+  .stat-pill-val {
+    font-size: 1rem;
+  }
+  .scanner-toggle {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    width: 100%;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .meta-keys {
+    display: none; /* Hide desktop keyboard hints */
+  }
+
+  /* ACTIVE DAY CONTROLS */
+  .session-selector {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .session-btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 0.8rem;
+    padding: 10px 8px;
+    gap: 6px;
+    min-height: 42px;
+  }
+  .session-badge {
+    display: none;
+  }
+
+  /* CANDIDATE RESULT CARDS */
+  .rc-candidate-card {
+    padding: 14px 14px;
+    margin-bottom: 10px;
+    gap: 12px;
+    border-radius: var(--radius-lg);
+  }
+  .rc-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .rc-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    border-radius: 10px;
+  }
+  .rc-fullname {
+    font-size: 1.02rem;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+  .rc-highlight-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .rc-highlight-box {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .rc-highlight-box .box-value {
+    font-size: 0.92rem;
+  }
+  .rc-highlight-box .box-label {
+    font-size: 0.65rem;
+  }
+
+  /* CARD ACTION ROW: Full Width Mobile Ergonomics */
+  .rc-action-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding-top: 8px;
+  }
+  .rc-action-row > div:first-child {
+    font-size: 0.78rem;
+  }
+  .rc-action-row > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  .btn-presence-action {
+    width: 100%;
+    min-height: 48px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 12px 18px;
+    justify-content: center;
+  }
+  .btn-delete-presence {
+    width: 100%;
+    min-height: 44px;
+    font-size: 0.85rem;
+    justify-content: center;
+  }
+
+  /* MODALS AS NATIVE-FEELING BOTTOM SHEETS */
+  .modal-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modal-box {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 22px 22px 0 0;
+    max-height: 90vh;
+    max-height: 90dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin: 0;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.7);
+  }
+  .modal-header-bar {
+    padding: 16px 20px;
+  }
+  .modal-body-content {
+    padding: 18px 20px;
+    gap: 16px;
+  }
+  .modal-footer-actions {
+    padding: 14px 20px 24px;
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  .modal-footer-actions .btn {
+    width: 100%;
+    min-height: 48px;
+    font-size: 0.95rem;
+    justify-content: center;
+  }
+
+  /* DATA TABLES & TOOLBARS */
+  .table-toolbar {
+    padding: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .table-filter-group {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+  .table-filter-group select,
+  .table-filter-group .filter-select {
+    width: 100% !important;
+    min-height: 42px;
+    font-size: 0.9rem;
+  }
+  .table-search-wrap {
+    width: 100% !important;
+  }
+  .data-table th,
+  .data-table td {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  /* BULK ACTIONS BAR */
+  #bulk-actions-container {
+    width: 100%;
+  }
+  #bulk-actions-container .btn {
+    flex: 1 1 calc(50% - 6px);
+    min-height: 38px;
+  }
+
+  /* PAGINATION */
+  .pagination-bar {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 14px 12px;
+  }
+  .pagination-controls {
+    width: 100%;
+    justify-content: center;
+    gap: 6px;
+  }
+  .pagination-controls .btn {
+    flex: 1;
+    min-height: 40px;
+  }
+  #list-page-size {
+    width: 100%;
+    min-height: 38px;
+  }
+
+  /* TABS — Smooth Horizontal Touch Carousel */
+  .view-mode-tabs {
+    gap: 6px;
+    padding: 6px 4px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .view-mode-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .view-mode-tab {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* EXPORT ACTIONS */
+  .session-export-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .session-export-actions .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  /* TOAST FULL MOBILE BAR */
+  .toast-container {
+    left: 12px;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .toast {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* IMPORT WIZARD */
+  .import-steps {
+    flex-direction: column;
+  }
+  .import-step-item {
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 10px 14px;
+  }
+  .dropzone {
+    padding: 28px 16px;
+  }
+  .mapping-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* ----------------------------------------------------------------
+   7. COMPACT SMARTPHONES (320px – 375px)
+      Maximum compact density & zero overflow guarantee
+   ---------------------------------------------------------------- */
+@media (max-width: 375px) {
+  .topbar {
+    height: 48px;
+    padding: 0 10px;
+  }
+  .topbar-brand {
+    font-size: 0.86rem;
+  }
+  .topbar-active-day {
+    max-width: 105px;
+    font-size: 0.66rem;
+    padding: 3px 6px;
+    gap: 4px;
+  }
+  .topbar-admin-badge {
+    display: none;
+  }
+
+  .view-container {
+    padding: 10px 10px 20px;
+  }
+
+  /* KPIS: 2 columns with reduced padding */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .kpi-card {
+    padding: 10px;
+  }
+  .kpi-value {
+    font-size: 1.35rem;
+  }
+  .kpi-title {
+    font-size: 0.65rem;
+  }
+
+  /* Search Card Highlight Box: Stack to single column on tiny screens */
+  .rc-highlight-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .rc-fullname {
+    font-size: 0.95rem;
+  }
+
+  /* Modal Title */
+  .modal-header-title {
+    font-size: 0.95rem;
+  }
+  .candidate-summary-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  /* Tab items */
+  .view-mode-tab {
+    padding: 7px 10px;
+    font-size: 0.74rem;
+  }
+  .tab-badge {
+    display: none;
+  }
+
+  /* Settings Form Inputs */
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .export-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ----------------------------------------------------------------
+   8. MOBILE LANDSCAPE ORIENTATION (Phones in landscape)
+   ---------------------------------------------------------------- */
+@media (max-width: 900px) and (orientation: landscape) {
+  body {
+    overflow: auto;
+  }
+  .topbar {
+    height: 48px;
+  }
+  .sidebar {
+    width: 260px;
+  }
+  .view-container {
+    padding: 12px 18px;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .kpi-card {
+    padding: 12px;
+  }
+  .kpi-value {
+    font-size: 1.4rem;
+  }
+  .rc-highlight-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .rc-action-row {
+    flex-direction: row;
+    align-items: center;
+  }
+  .rc-action-row > div:last-child {
+    flex-direction: row;
+    width: auto;
+  }
+  .btn-presence-action {
+    width: auto;
+    min-height: 40px;
+  }
+
+  /* Centered modal in landscape (fits inside viewport) */
+  .modal-backdrop {
+    align-items: center;
+    padding: 12px;
+  }
+  .modal-box {
+    border-radius: var(--radius-lg);
+    max-height: 94vh;
+    max-height: 94dvh;
+    max-width: 520px;
+    margin: auto;
+  }
+  .modal-footer-actions {
+    flex-direction: row;
+    padding: 12px 18px;
+  }
+  .modal-footer-actions .btn {
+    width: auto;
+    min-height: 40px;
+  }
+}
+
+/* ----------------------------------------------------------------
+   9. TOUCH HARDWARE OPTIMIZATIONS
+   ---------------------------------------------------------------- */
+@media (hover: none) and (pointer: coarse) {
+  /* Tap highlight cleanup */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Disable hover transforms that feel jittery on touch */
+  .rc-candidate-card:hover,
+  .kpi-card:hover,
+  .btn:hover,
+  .btn-delete-presence:hover,
+  .btn-presence-action:hover {
+    transform: none !important;
+  }
+
+  /* Tactile feedback on touch tap */
+  .btn:active,
+  .btn-presence-action:active {
+    opacity: 0.85;
+    transform: scale(0.98) !important;
+  }
+  .rc-candidate-card:active {
+    background-color: var(--bg-surface-elevated);
+    border-color: var(--color-primary);
+  }
+  .nav-item:active {
+    background-color: var(--bg-hover);
+  }
+
+  /* Generous navigation touch targets */
+  .nav-item {
+    padding: 12px 14px;
+    min-height: 46px;
+  }
+}
+
+/* ----------------------------------------------------------------
+   10. PRINT OPTIMIZATIONS
+   ---------------------------------------------------------------- */
+@media print {
+  .sidebar,
+  .topbar,
+  .toast-container,
+  .modal-backdrop,
+  .menu-toggle,
+  .view-actions,
+  .table-toolbar,
+  .pagination-bar,
+  .rc-action-row {
+    display: none !important;
+  }
+  .main-content {
+    width: 100% !important;
+    height: auto !important;
+  }
+  .view-container {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  body {
+    overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .table-card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .data-table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+  .data-table th,
+  .data-table td {
+    border: 1px solid #ccc !important;
+    color: #000 !important;
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "easy_two",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/server/index.js",
+  "scripts": {
+    "start": "node src/server/index.js",
+    "dev": "node --watch src/server/index.js",
+    "generate-test-data": "node test/generate_test_data.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "multer": "^2.4.0",
+    "ws": "^8.22.0",
+    "xlsx": "^0.18.5"
+  }
+}

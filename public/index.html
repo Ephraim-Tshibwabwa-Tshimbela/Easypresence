@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>EasyPresence &mdash; Gestion des Pr&eacute;sences</title>
+  <meta name="description" content="Recherche ultra-rapide et gestion de pr&eacute;sence multi-postes en r&eacute;seau local.">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="app-container">
+
+    <!-- ======= SIDEBAR ======= -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo">
+          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+          </svg>
+          <div class="brand-text">
+            <span class="brand-title">EasyPresence</span>
+            <span class="brand-badge">LAN &middot; Hors Ligne</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+
+        <!-- Workflow steps label -->
+        <div class="nav-section-label">&Eacute;tapes</div>
+
+        <!-- Step 1: Import -->
+        <button class="nav-item" data-view="import" id="nav-import">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+          <span class="nav-label">Charger Excel</span>
+          <span class="nav-step">1</span>
+        </button>
+
+        <!-- Step 2: Search & Mark -->
+        <button class="nav-item active" data-view="search" id="nav-search">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <span class="nav-label">Recherche &amp; Pointage</span>
+          <span class="nav-step">2</span>
+        </button>
+
+        <!-- Step 3: Full Registry -->
+        <button class="nav-item" data-view="list" id="nav-list">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6"/>
+            <line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/>
+            <line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+          <span class="nav-label">Registre Complet</span>
+          <span class="nav-step">3</span>
+        </button>
+
+        <!-- Section: Presences -->
+        <div class="nav-section-label" style="margin-top: 6px;">Pr&eacute;sences</div>
+
+        <button class="nav-item" data-view="presences_info" id="nav-presences-info">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+          <span class="nav-label">Journ&eacute;e Info</span>
+          <span class="tab-badge info" id="nav-badge-info">0</span>
+        </button>
+
+        <button class="nav-item" data-view="presences_test" id="nav-presences-test">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          <span class="nav-label">Journ&eacute;e Test</span>
+          <span class="tab-badge test" id="nav-badge-test">0</span>
+        </button>
+
+        <!-- Section: Outils -->
+        <div class="nav-section-label" style="margin-top: 6px;">Outils</div>
+
+        <button class="nav-item" data-view="export" id="nav-export">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span class="nav-label">Rapports &amp; Exports</span>
+          <span class="nav-badge-key">F5</span>
+        </button>
+
+        <button class="nav-item" data-view="history" id="nav-history">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span class="nav-label">Historique</span>
+        </button>
+
+        <button class="nav-item" data-view="postes" id="nav-postes">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          <span class="nav-label">Postes connect&eacute;s</span>
+        </button>
+
+        <button class="nav-item" data-view="settings" id="nav-settings">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+          </svg>
+          <span class="nav-label">R&eacute;seau &amp; Param&egrave;tres</span>
+          <span class="nav-badge-key">F6</span>
+        </button>
+
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="lan-indicator" id="lan-indicator">
+          <span class="lan-pulse online"></span>
+          <span class="lan-text" id="lan-text">R&eacute;seau LAN</span>
+        </div>
+        <div class="agent-chip" id="agent-chip">
+          <span class="agent-avatar">&#128187;</span>
+          <span class="agent-name" id="display-agent-name">Poste 01</span>
+          <!-- role badge injected by JS -->
+        </div>
+
+        <!-- Client workstation rename widget (hidden for admin via JS) -->
+        <div class="client-rename-widget" id="client-rename-widget" style="display:none;">
+          <label class="client-rename-label">Nom de ce poste</label>
+          <div class="client-rename-row">
+            <input
+              type="text"
+              id="client-rename-input"
+              class="client-rename-input"
+              placeholder="Ex: Poste-Accueil"
+              maxlength="64"
+            />
+            <button class="client-rename-btn" id="client-rename-save" title="Enregistrer le nom du poste">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="sidebar-tools">
+          <button class="tool-btn" id="theme-toggle" title="Mode Sombre/Clair">
+            <svg class="sun-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <span>Th&egrave;me</span>
+          </button>
+          <button class="tool-btn" id="sound-toggle" title="Son de confirmation">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+            <span>Son</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ======= MAIN WORKSPACE ======= -->
+    <main id="main-content" class="main-content">
+
+      <!-- Slim Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menu-toggle" aria-label="Menu">
+            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="topbar-brand">EasyPresence</div>
+        </div>
+        <div class="topbar-right">
+          <!-- Admin badge: shown only on host machine -->
+          <div class="topbar-admin-badge" id="topbar-admin-badge" style="display:none;" title="Machine Hôte - Accès Administrateur">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Admin</span>
+          </div>
+          <!-- Active day badge: visible across all views -->
+          <div class="topbar-active-day info" id="topbar-active-day" title="Journée de présence actuellement active">
+            <span class="topbar-day-dot"></span>
+            <span id="topbar-active-day-label">Journ&eacute;e d'information</span>
+          </div>
+
+          <div class="topbar-lan" id="topbar-lan-ip">
+            <span>&#127760;</span>
+            <span id="header-lan-ip">LAN...</span>
+          </div>
+          <div class="topbar-stats" id="topbar-quick-stats">
+            <span id="qs-total">&mdash;</span> inscrits
+            &middot; <span id="qs-info" class="stat-info">&mdash;</span> info
+            &middot; <span id="qs-test" class="stat-test">&mdash;</span> test
+          </div>
+        </div>
+      </header>
+
+      <!-- Dynamic View Container -->
+      <section id="view-container" class="view-container"></section>
+    </main>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Modal Container -->
+  <div id="modal-container" class="modal-backdrop hidden"></div>
+
+  <!-- Application Modules -->
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

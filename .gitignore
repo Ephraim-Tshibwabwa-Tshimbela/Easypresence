@@ -1,0 +1,32 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database & SQLite files (contains candidate data & transactions)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.db.pre_mission_bak
+data/backups/
+backups/
+
+# Logs & Process Supervisor
+logs/
+*.log
+
+# Environment variables & local secrets
+.env
+.env.local
+.env.*.local
+
+# OS system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary and test artifacts
+tmp/
+temp/
+coverage/
