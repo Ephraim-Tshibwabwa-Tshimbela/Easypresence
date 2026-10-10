@@ -1,6 +1,87 @@
 import { store } from '../state.js';
+import { api } from '../api.js';
 
 export function renderExportView(container) {
+  const getAdminToken = () => {
+    return sessionStorage.getItem('easypresence_admin_token') || localStorage.getItem('easypresence_admin_token') || '';
+  };
+
+  const isActuallyAdmin = Boolean(store.get('isAdmin') || getAdminToken());
+
+  // If not authenticated as Admin, display clean unlock card
+  if (!isActuallyAdmin) {
+    container.innerHTML = `
+      <div class="view-header">
+        <div class="view-title-group">
+          <h1>📊 Rapports &amp; Exportations</h1>
+          <p>Exportez facilement les résultats de présence pour chaque journée (Info ou Test) ou la synthèse globale</p>
+        </div>
+      </div>
+
+      <div style="max-width: 520px; margin: 40px auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 32px; text-align: center; box-shadow: var(--shadow-md);">
+        <div style="font-size: 3rem; margin-bottom: 12px;">🔒</div>
+        <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+          Session Administrateur Requise
+        </h2>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5;">
+          Le téléchargement des listes de présence et des rapports certifiés (Excel / PDF) est une fonction réservée aux administrateurs.
+        </p>
+
+        <form id="export-unlock-form" style="display: flex; flex-direction: column; gap: 14px; text-align: left;">
+          <div>
+            <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">
+              Mot de passe administrateur :
+            </label>
+            <input 
+              type="password" 
+              id="export-admin-pwd" 
+              class="filter-input" 
+              style="width: 100%; font-size: 0.95rem; padding: 12px 14px;" 
+              placeholder="Saisissez votre mot de passe (ex: admin2026)" 
+              required 
+              autocomplete="current-password"
+            />
+          </div>
+          <div id="export-unlock-error" style="color: var(--color-danger); font-size: 0.85rem; display: none;"></div>
+          <button type="submit" class="btn btn-primary btn-lg" id="btn-export-unlock" style="width: 100%; justify-content: center; margin-top: 4px;">
+            🔓 Déverrouiller et Accéder aux Rapports
+          </button>
+        </form>
+      </div>
+    `;
+
+    const form = container.querySelector('#export-unlock-form');
+    const pwdInput = container.querySelector('#export-admin-pwd');
+    const submitBtn = container.querySelector('#btn-export-unlock');
+    const errorEl = container.querySelector('#export-unlock-error');
+
+    setTimeout(() => pwdInput?.focus(), 100);
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pwd = (pwdInput?.value || '').trim();
+      if (!pwd) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Vérification...';
+      errorEl.style.display = 'none';
+
+      try {
+        await api.loginAdmin(pwd);
+        window.app?.showToast('🔑 Accès aux rapports déverrouillé avec succès', 'success');
+        renderExportView(container);
+      } catch (err) {
+        errorEl.textContent = err.message || 'Mot de passe incorrect.';
+        errorEl.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = '🔓 Déverrouiller et Accéder aux Rapports';
+        pwdInput.select();
+      }
+    });
+
+    return;
+  }
+
   const stats = store.get('stats') || {
     total: 0,
     presentInfo: 0,
@@ -16,9 +97,12 @@ export function renderExportView(container) {
     <div class="view-header">
       <div class="view-title-group">
         <h1>
-          <span>Rapports & Exportations par Journée</span>
+          <span>📊 Rapports &amp; Exportations par Journée</span>
         </h1>
-        <p>Exportez facilement les résultats de présence pour chaque journée (Info ou Test) ou la synthèse globale</p>
+        <p>Générez et téléchargez directement les classeurs Excel (.xlsx) et fiches certifiées PDF (.pdf)</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="role-badge role-admin" style="font-size:0.75rem;padding:6px 14px;">👑 SESSION ADMIN VALIDÉE</span>
       </div>
     </div>
 
@@ -198,55 +282,140 @@ export function renderExportView(container) {
     </div>
   `;
 
-  const getAdminToken = () => {
-    return sessionStorage.getItem('easypresence_admin_token') || localStorage.getItem('easypresence_admin_token') || '';
-  };
+  // --- Programmatic file download via fetch (prevents JSON page redirect) ---
+  async function downloadReport(urlEndpoint, defaultFilename, btnElement) {
+    const originalText = btnElement ? btnElement.innerHTML : '';
+    if (btnElement) {
+      btnElement.disabled = true;
+      btnElement.innerHTML = `
+        <span class="postes-spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:8px;vertical-align:middle;"></span>
+        Génération en cours...
+      `;
+    }
+
+    const toastMsg = defaultFilename.endsWith('.xlsx')
+      ? '📊 Génération du classeur Excel en cours...'
+      : '📄 Génération de la fiche PDF en cours...';
+    window.app?.showToast(toastMsg, 'info');
+
+    try {
+      const token = getAdminToken();
+      const url = new URL(urlEndpoint, window.location.origin);
+      if (token) {
+        url.searchParams.set('admin_token', token);
+      }
+
+      const res = await fetch(url.toString(), {
+        method: 'GET',
+        headers: api.getHeaders()
+      });
+
+      if (!res.ok) {
+        let errorMsg = `Erreur HTTP ${res.status}`;
+        try {
+          const json = await res.json();
+          errorMsg = json.error || errorMsg;
+        } catch (_) {}
+        throw new Error(errorMsg);
+      }
+
+      let filename = defaultFilename;
+      const disposition = res.headers.get('content-disposition');
+      if (disposition && disposition.includes('filename=')) {
+        const match = disposition.match(/filename="?([^";]+)"?/);
+        if (match && match[1]) filename = match[1].trim();
+      }
+
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      }, 2000);
+
+      window.app?.showToast(`✅ ${filename} téléchargé avec succès !`, 'success');
+    } catch (err) {
+      window.app?.showToast(`Échec du téléchargement : ${err.message}`, 'error');
+    } finally {
+      if (btnElement) {
+        btnElement.disabled = false;
+        btnElement.innerHTML = originalText;
+      }
+    }
+  }
+
+  const today = new Date().toISOString().substring(0, 10);
 
   // --- Handlers Journée Info ---
-  container.querySelector('#btn-export-info-excel')?.addEventListener('click', () => {
+  const btnInfoExcel = container.querySelector('#btn-export-info-excel');
+  btnInfoExcel?.addEventListener('click', () => {
     const filter = container.querySelector('#export-info-filter').value;
-    const token = getAdminToken();
-    window.location.href = `/api/export/excel?filter=${encodeURIComponent(filter)}&session=info&admin_token=${encodeURIComponent(token)}`;
-    window.app.showToast('Génération du fichier Excel pour la Journée d\'Information...', 'info');
+    downloadReport(
+      `/api/export/excel?filter=${encodeURIComponent(filter)}&session=info`,
+      `presences_journee_info_${today}.xlsx`,
+      btnInfoExcel
+    );
   });
 
-  container.querySelector('#btn-export-info-pdf')?.addEventListener('click', () => {
+  const btnInfoPdf = container.querySelector('#btn-export-info-pdf');
+  btnInfoPdf?.addEventListener('click', () => {
     const filter = container.querySelector('#export-info-filter').value;
     const title = encodeURIComponent('LISTE DES PRÉSENCES — JOURNÉE D\'INFORMATION');
-    const token = getAdminToken();
-    window.location.href = `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=info&title=${title}&admin_token=${encodeURIComponent(token)}`;
-    window.app.showToast('Génération de la fiche PDF pour la Journée d\'Information...', 'info');
+    downloadReport(
+      `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=info&title=${title}`,
+      `presences_journee_info_${today}.pdf`,
+      btnInfoPdf
+    );
   });
 
   // --- Handlers Journée Test ---
-  container.querySelector('#btn-export-test-excel')?.addEventListener('click', () => {
+  const btnTestExcel = container.querySelector('#btn-export-test-excel');
+  btnTestExcel?.addEventListener('click', () => {
     const filter = container.querySelector('#export-test-filter').value;
-    const token = getAdminToken();
-    window.location.href = `/api/export/excel?filter=${encodeURIComponent(filter)}&session=test&admin_token=${encodeURIComponent(token)}`;
-    window.app.showToast('Génération du fichier Excel pour la Journée du Test...', 'info');
+    downloadReport(
+      `/api/export/excel?filter=${encodeURIComponent(filter)}&session=test`,
+      `presences_journee_test_${today}.xlsx`,
+      btnTestExcel
+    );
   });
 
-  container.querySelector('#btn-export-test-pdf')?.addEventListener('click', () => {
+  const btnTestPdf = container.querySelector('#btn-export-test-pdf');
+  btnTestPdf?.addEventListener('click', () => {
     const filter = container.querySelector('#export-test-filter').value;
     const title = encodeURIComponent('LISTE DES PRÉSENCES — JOURNÉE DU TEST');
-    const token = getAdminToken();
-    window.location.href = `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=test&title=${title}&admin_token=${encodeURIComponent(token)}`;
-    window.app.showToast('Génération de la fiche PDF pour la Journée du Test...', 'info');
+    downloadReport(
+      `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=test&title=${title}`,
+      `presences_journee_test_${today}.pdf`,
+      btnTestPdf
+    );
   });
 
   // --- Handlers Global ---
-  container.querySelector('#btn-export-global-excel')?.addEventListener('click', () => {
+  const btnGlobalExcel = container.querySelector('#btn-export-global-excel');
+  btnGlobalExcel?.addEventListener('click', () => {
     const filter = container.querySelector('#export-global-filter').value;
-    const token = getAdminToken();
-    window.location.href = `/api/export/excel?filter=${encodeURIComponent(filter)}&session=both&admin_token=${encodeURIComponent(token)}`;
-    window.app.showToast('Génération du classeur Excel comparatif...', 'info');
+    downloadReport(
+      `/api/export/excel?filter=${encodeURIComponent(filter)}&session=both`,
+      `presences_comparatif_global_${today}.xlsx`,
+      btnGlobalExcel
+    );
   });
 
-  container.querySelector('#btn-export-global-pdf')?.addEventListener('click', () => {
+  const btnGlobalPdf = container.querySelector('#btn-export-global-pdf');
+  btnGlobalPdf?.addEventListener('click', () => {
     const filter = container.querySelector('#export-global-filter').value;
     const title = encodeURIComponent('LISTE DE PRÉSENCE COMPARATIVE — INFO ET TEST');
-    const token = getAdminToken();
-    window.location.href = `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=both&title=${title}&admin_token=${encodeURIComponent(token)}`;
-    window.app.showToast('Génération du rapport PDF comparatif...', 'info');
+    downloadReport(
+      `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=both&title=${title}`,
+      `presences_comparatif_global_${today}.pdf`,
+      btnGlobalPdf
+    );
   });
 }

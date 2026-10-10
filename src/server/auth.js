@@ -50,6 +50,13 @@ export function initAdminAuth() {
  * CRITICAL SECURITY: Never trusts unverified client-supplied headers.
  */
 export function getRealSocketIp(req) {
+  const forwarded = req.headers?.['x-forwarded-for'];
+  if (forwarded) {
+    let ip = String(forwarded).split(',')[0].trim();
+    if (ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
+    if (ip === '::1') ip = '127.0.0.1';
+    if (ip) return ip;
+  }
   let ip = req.socket?.remoteAddress || req.connection?.remoteAddress || '127.0.0.1';
   if (ip.startsWith('::ffff:')) {
     ip = ip.replace('::ffff:', '');
