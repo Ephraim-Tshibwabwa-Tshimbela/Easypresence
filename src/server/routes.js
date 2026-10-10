@@ -131,31 +131,45 @@ function getClientIp(req) {
   return getRealSocketIp(req);
 }
 
+function getReqClientId(req) {
+  return req.headers['x-client-id'] || getRealSocketIp(req);
+}
+
+function getReqDeviceInfo(req) {
+  try {
+    const raw = req.headers['x-device-info'];
+    if (raw) return JSON.parse(decodeURIComponent(raw));
+  } catch (_) {}
+  return null;
+}
+
 /** GET /api/client/name — returns the saved name for this workstation */
 router.get('/client/name', (req, res) => {
+  const clientId = getReqClientId(req);
   const ip = getClientIp(req);
-  recordClientActivity(ip);
+  recordClientActivity(clientId, null, ip, getReqDeviceInfo(req));
   const clients = getConnectedClientsList();
-  const station = clients.find(c => c.ip === ip);
-  res.json({ success: true, data: { name: station?.name || null, ip } });
+  const station = clients.find(c => c.id === clientId || c.ip === ip);
+  res.json({ success: true, data: { name: station?.name || null, ip, clientId } });
 });
 
 /** POST /api/client/name — saves / updates the workstation name */
 router.post('/client/name', (req, res) => {
+  const clientId = getReqClientId(req);
   const ip = getClientIp(req);
   const { name } = req.body;
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     return res.status(400).json({ success: false, error: 'Nom du poste invalide.' });
   }
   const safe = name.trim().substring(0, 64);
-  setStationName(ip, safe);
+  setStationName(clientId, safe);
 
   broadcast({
     type: 'WORKSTATION_UPDATED',
-    data: { ip, name: safe }
+    data: { clientId, ip, name: safe }
   });
 
-  res.json({ success: true, data: { name: safe, ip } });
+  res.json({ success: true, data: { name: safe, ip, clientId } });
 });
 
 /** GET /api/admin/clients — admin only: full real-time list of workstations */
@@ -254,7 +268,7 @@ router.get('/search', (req, res) => {
   try {
     const q = req.query.q || '';
     const limit = parseInt(req.query.limit, 10) || 50;
-    recordClientActivity(getClientIp(req));
+    recordClientActivity(getReqClientId(req), null, getClientIp(req), getReqDeviceInfo(req));
     const results = searchPersons(q, limit);
     res.json({ success: true, count: results.length, data: results });
   } catch (err) {
@@ -293,7 +307,7 @@ router.post('/presence/confirm-mark', (req, res) => {
     const sessionLabel = activeDay === 'test' ? 'Journée de test' : "Journée d'information";
 
     const ip = getClientIp(req);
-    recordClientActivity(ip, agentName);
+    recordClientActivity(getReqClientId(req), agentName, ip, getReqDeviceInfo(req));
 
     // Verify if candidate is already marked present for the active day
     const details = getPersonPresenceDetails(id, activeDay);
@@ -375,7 +389,7 @@ router.post('/presence/toggle', (req, res) => {
     if (!id) return res.status(400).json({ success: false, error: 'ID requis' });
 
     const ip = getClientIp(req);
-    recordClientActivity(ip, agentName);
+    recordClientActivity(getReqClientId(req), agentName, ip, getReqDeviceInfo(req));
     const result = togglePresence(id, sessionType, status !== undefined ? status : null, agentName, ip);
 
     // Broadcast change to all connected stations on the network
@@ -402,7 +416,8 @@ router.post('/presence/bulk', (req, res) => {
       return res.status(400).json({ success: false, error: 'Liste d\'identifiants requise' });
     }
 
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const ip = getClientIp(req);
+    recordClientActivity(getReqClientId(req), agentName, ip, getReqDeviceInfo(req));
     const result = bulkMarkPresence(ids, sessionType, isPresent, agentName, ip);
 
     broadcast({

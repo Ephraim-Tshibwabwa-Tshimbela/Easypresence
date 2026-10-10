@@ -1391,7 +1391,8 @@
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
-.postes-status-pill {
+.postes-status-pill,
+.poste-status-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1400,18 +1401,21 @@
   font-size: 0.8rem;
   font-weight: 700;
 }
-.postes-status-pill.online {
+.postes-status-pill.online,
+.poste-status-pill.online {
   background: rgba(16, 185, 129, 0.15);
   color: #10b981;
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
-.postes-status-pill.offline {
+.postes-status-pill.offline,
+.poste-status-pill.offline {
   background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.postes-role-pill {
+.postes-role-pill,
+.poste-role-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1421,12 +1425,14 @@
   font-weight: 800;
   letter-spacing: 0.05em;
 }
-.postes-role-pill.admin {
+.postes-role-pill.admin,
+.poste-role-pill.admin {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.15));
   color: #f59e0b;
   border: 1px solid rgba(245, 158, 11, 0.4);
 }
-.postes-role-pill.client {
+.postes-role-pill.client,
+.poste-role-pill.client {
   background: rgba(79, 142, 247, 0.15);
   color: var(--color-primary);
   border: 1px solid rgba(79, 142, 247, 0.3);

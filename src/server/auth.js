@@ -144,6 +144,18 @@ export function changeAdminPassword(currentPassword, newPassword) {
   return true;
 }
 
+export function isValidAdminToken(token) {
+  if (!token || typeof token !== 'string') return false;
+  const cleanToken = token.trim();
+  const session = adminSessions.get(cleanToken);
+  if (!session) return false;
+  if (Date.now() > session.expiresAt) {
+    adminSessions.delete(cleanToken);
+    return false;
+  }
+  return true;
+}
+
 /**
  * Extracts and verifies the admin token from an incoming HTTP request.
  */
@@ -159,18 +171,7 @@ export function verifyAdminRequest(req) {
     token = String(req.query.admin_token).trim();
   }
 
-  if (!token) return false;
-
-  const session = adminSessions.get(token);
-  if (!session) return false;
-
-  // Check expiration
-  if (Date.now() > session.expiresAt) {
-    adminSessions.delete(token);
-    return false;
-  }
-
-  return true;
+  return isValidAdminToken(token);
 }
 
 /**

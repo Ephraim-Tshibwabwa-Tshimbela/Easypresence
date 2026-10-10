@@ -38,6 +38,8 @@ class App {
     } catch (_) {
       // If /auth/role fails (offline?), stay as client - safe default
     }
+    store.setRole(roleData.role);
+    store.set('isAdmin', Boolean(roleData.isAdmin));
 
     // 2. Restore workstation name from server for client machines
     if (!roleData.isAdmin) {

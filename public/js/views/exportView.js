@@ -198,45 +198,55 @@ export function renderExportView(container) {
     </div>
   `;
 
+  const getAdminToken = () => {
+    return sessionStorage.getItem('easypresence_admin_token') || localStorage.getItem('easypresence_admin_token') || '';
+  };
+
   // --- Handlers Journée Info ---
   container.querySelector('#btn-export-info-excel')?.addEventListener('click', () => {
     const filter = container.querySelector('#export-info-filter').value;
-    window.location.href = `/api/export/excel?filter=${encodeURIComponent(filter)}&session=info`;
+    const token = getAdminToken();
+    window.location.href = `/api/export/excel?filter=${encodeURIComponent(filter)}&session=info&admin_token=${encodeURIComponent(token)}`;
     window.app.showToast('Génération du fichier Excel pour la Journée d\'Information...', 'info');
   });
 
   container.querySelector('#btn-export-info-pdf')?.addEventListener('click', () => {
     const filter = container.querySelector('#export-info-filter').value;
     const title = encodeURIComponent('LISTE DES PRÉSENCES — JOURNÉE D\'INFORMATION');
-    window.location.href = `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=info&title=${title}`;
+    const token = getAdminToken();
+    window.location.href = `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=info&title=${title}&admin_token=${encodeURIComponent(token)}`;
     window.app.showToast('Génération de la fiche PDF pour la Journée d\'Information...', 'info');
   });
 
   // --- Handlers Journée Test ---
   container.querySelector('#btn-export-test-excel')?.addEventListener('click', () => {
     const filter = container.querySelector('#export-test-filter').value;
-    window.location.href = `/api/export/excel?filter=${encodeURIComponent(filter)}&session=test`;
+    const token = getAdminToken();
+    window.location.href = `/api/export/excel?filter=${encodeURIComponent(filter)}&session=test&admin_token=${encodeURIComponent(token)}`;
     window.app.showToast('Génération du fichier Excel pour la Journée du Test...', 'info');
   });
 
   container.querySelector('#btn-export-test-pdf')?.addEventListener('click', () => {
     const filter = container.querySelector('#export-test-filter').value;
     const title = encodeURIComponent('LISTE DES PRÉSENCES — JOURNÉE DU TEST');
-    window.location.href = `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=test&title=${title}`;
+    const token = getAdminToken();
+    window.location.href = `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=test&title=${title}&admin_token=${encodeURIComponent(token)}`;
     window.app.showToast('Génération de la fiche PDF pour la Journée du Test...', 'info');
   });
 
   // --- Handlers Global ---
   container.querySelector('#btn-export-global-excel')?.addEventListener('click', () => {
     const filter = container.querySelector('#export-global-filter').value;
-    window.location.href = `/api/export/excel?filter=${encodeURIComponent(filter)}&session=both`;
+    const token = getAdminToken();
+    window.location.href = `/api/export/excel?filter=${encodeURIComponent(filter)}&session=both&admin_token=${encodeURIComponent(token)}`;
     window.app.showToast('Génération du classeur Excel comparatif...', 'info');
   });
 
   container.querySelector('#btn-export-global-pdf')?.addEventListener('click', () => {
     const filter = container.querySelector('#export-global-filter').value;
     const title = encodeURIComponent('LISTE DE PRÉSENCE COMPARATIVE — INFO ET TEST');
-    window.location.href = `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=both&title=${title}`;
+    const token = getAdminToken();
+    window.location.href = `/api/export/pdf?filter=${encodeURIComponent(filter)}&session=both&title=${title}&admin_token=${encodeURIComponent(token)}`;
     window.app.showToast('Génération du rapport PDF comparatif...', 'info');
   });
 }

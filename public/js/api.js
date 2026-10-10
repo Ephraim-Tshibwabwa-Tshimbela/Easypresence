@@ -5,8 +5,82 @@ class ApiClient {
   constructor() {
     this.ws = null;
     this.reconnectTimer = null;
+    this.heartbeatTimer = null;
     this.listeners = new Map();
     this.initWebSocket();
+    this.setupUnloadHandler();
+  }
+
+  getClientId() {
+    let id = localStorage.getItem('easypresence_client_id');
+    if (!id) {
+      id = 'cl_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+      localStorage.setItem('easypresence_client_id', id);
+    }
+    return id;
+  }
+
+  getDeviceInfo() {
+    const ua = navigator.userAgent || '';
+    let os = 'Windows';
+    let deviceType = 'desktop';
+
+    if (/iPad|tablet|(android(?!.*mobile))/i.test(ua)) {
+      deviceType = 'tablet';
+    } else if (/Mobi|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
+      deviceType = 'mobile';
+    }
+
+    if (/Windows NT/i.test(ua)) os = 'Windows';
+    else if (/Macintosh|Mac OS X/i.test(ua)) os = 'macOS';
+    else if (/iPhone/i.test(ua)) os = 'iPhone';
+    else if (/iPad/i.test(ua)) os = 'iPad';
+    else if (/Android/i.test(ua)) os = 'Android';
+    else if (/Linux/i.test(ua)) os = 'Linux';
+    else if (/CrOS/i.test(ua)) os = 'ChromeOS';
+
+    let browser = 'Navigateur';
+    if (/Edg\//i.test(ua)) browser = 'Edge';
+    else if (/OPR\/|Opera/i.test(ua)) browser = 'Opera';
+    else if (/Chrome\//i.test(ua)) browser = 'Chrome';
+    else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) browser = 'Safari';
+    else if (/Firefox\//i.test(ua)) browser = 'Firefox';
+
+    const icon = deviceType === 'mobile' ? '📱' : deviceType === 'tablet' ? '📱' : '💻';
+    const label = `${icon} ${os} • ${browser}`;
+
+    return { os, browser, deviceType, label };
+  }
+
+  setupUnloadHandler() {
+    window.addEventListener('beforeunload', () => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        try {
+          this.ws.send(JSON.stringify({
+            type: 'GOODBYE',
+            clientId: this.getClientId()
+          }));
+        } catch (_) {}
+      }
+    });
+  }
+
+  sendIdentify() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    const token = sessionStorage.getItem('easypresence_admin_token') || localStorage.getItem('easypresence_admin_token');
+    const isAdmin = Boolean(store.get('isAdmin') || token);
+    const clientName = store.get('workstationName') || store.get('agentName') || (isAdmin ? 'PC-Admin' : 'Poste Opérateur');
+
+    try {
+      this.ws.send(JSON.stringify({
+        type: 'IDENTIFY',
+        clientId: this.getClientId(),
+        name: clientName,
+        role: isAdmin ? 'ADMIN' : 'OPERATEUR',
+        token: token || null,
+        deviceInfo: this.getDeviceInfo()
+      }));
+    } catch (_) {}
   }
 
   // --- WebSocket Real-Time Sync ---
@@ -23,6 +97,22 @@ class ApiClient {
           clearTimeout(this.reconnectTimer);
           this.reconnectTimer = null;
         }
+
+        // Send identify message immediately upon connecting
+        this.sendIdentify();
+
+        // Start heartbeat keep-alive (every 20s)
+        if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+        this.heartbeatTimer = setInterval(() => {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            try {
+              this.ws.send(JSON.stringify({
+                type: 'PING',
+                clientId: this.getClientId()
+              }));
+            } catch (_) {}
+          }
+        }, 20000);
       };
 
       this.ws.onmessage = (event) => {
@@ -34,11 +124,19 @@ class ApiClient {
 
       this.ws.onclose = () => {
         store.set('isOnline', false);
+        if (this.heartbeatTimer) {
+          clearInterval(this.heartbeatTimer);
+          this.heartbeatTimer = null;
+        }
         this.scheduleReconnect();
       };
 
       this.ws.onerror = () => {
         store.set('isOnline', false);
+        if (this.heartbeatTimer) {
+          clearInterval(this.heartbeatTimer);
+          this.heartbeatTimer = null;
+        }
         try { this.ws.close(); } catch (_) {}
       };
     } catch (_) {
@@ -115,9 +213,11 @@ class ApiClient {
   getHeaders(extra = {}) {
     const headers = {
       'Accept': 'application/json',
+      'X-Client-Id': this.getClientId(),
+      'X-Device-Info': encodeURIComponent(JSON.stringify(this.getDeviceInfo())),
       ...extra
     };
-    const token = sessionStorage.getItem('easypresence_admin_token');
+    const token = sessionStorage.getItem('easypresence_admin_token') || localStorage.getItem('easypresence_admin_token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
       headers['X-Admin-Token'] = token;
@@ -208,9 +308,12 @@ class ApiClient {
   async uploadExcelPreview(file) {
     const formData = new FormData();
     formData.append('file', file);
+    const headers = this.getHeaders();
+    delete headers['Content-Type'];
 
     const res = await fetch('/api/excel/preview', {
       method: 'POST',
+      headers,
       body: formData
     });
     const json = await res.json();
@@ -244,7 +347,7 @@ class ApiClient {
   async delete(endpoint) {
     const res = await fetch(`/api${endpoint}`, {
       method: 'DELETE',
-      headers: { 'Accept': 'application/json' }
+      headers: this.getHeaders()
     });
     const json = await res.json();
     if (!res.ok || !json.success) {
@@ -343,7 +446,11 @@ class ApiClient {
     const res = await this.post('/auth/login', { password });
     if (res.token) {
       sessionStorage.setItem('easypresence_admin_token', res.token);
+      localStorage.setItem('easypresence_admin_token', res.token);
+      store.setRole('admin');
       store.set('isAdmin', true);
+      this.sendIdentify();
+      window.app?.applyRoleToUI(true);
     }
     return res;
   }
@@ -353,7 +460,11 @@ class ApiClient {
       await this.post('/auth/logout', {});
     } catch (_) {}
     sessionStorage.removeItem('easypresence_admin_token');
+    localStorage.removeItem('easypresence_admin_token');
+    store.setRole('client');
     store.set('isAdmin', false);
+    this.sendIdentify();
+    window.app?.applyRoleToUI(false);
   }
 
   async changePassword(currentPassword, newPassword) {
