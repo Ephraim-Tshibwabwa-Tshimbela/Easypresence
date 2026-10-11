@@ -1,5 +1,13 @@
 import crypto from 'node:crypto';
-import { getSetting, setSetting } from './db.js';
+import {
+  getSetting,
+  setSetting,
+  saveAdminSession,
+  getAdminSession,
+  deleteAdminSession,
+  clearAllAdminSessions,
+  cleanExpiredAdminSessions
+} from './db.js';
 
 // Active admin sessions: token -> { createdAt, expiresAt, ip }
 const adminSessions = new Map();
@@ -46,8 +54,7 @@ export function initAdminAuth() {
 }
 
 /**
- * Returns the verified physical IP from the connection socket.
- * CRITICAL SECURITY: Never trusts unverified client-supplied headers.
+ * Returns the verified physical IP from the connection socket or reverse proxy.
  */
 export function getRealSocketIp(req) {
   const forwarded = req.headers?.['x-forwarded-for'];
@@ -101,12 +108,16 @@ export function loginAdmin(password, clientIp) {
   const token = crypto.randomBytes(32).toString('hex');
   const expiresAt = now + SESSION_LIFETIME_MS;
 
-  adminSessions.set(token, {
+  const sessionData = {
     token,
     ip: clientIp,
     createdAt: now,
     expiresAt
-  });
+  };
+
+  adminSessions.set(token, sessionData);
+  // Persist session to SQLite so restarts / redeploys don't invalidate it
+  saveAdminSession(token, clientIp, now, expiresAt);
 
   console.log(`🔑 [SÉCURITÉ] Session administrateur ouverte avec succès pour l'IP ${clientIp}`);
 
@@ -121,8 +132,10 @@ export function loginAdmin(password, clientIp) {
  * Logs out an admin session.
  */
 export function logoutAdmin(token) {
-  if (token && adminSessions.has(token)) {
-    adminSessions.delete(token);
+  if (token) {
+    const cleanToken = token.trim();
+    adminSessions.delete(cleanToken);
+    deleteAdminSession(cleanToken);
     return true;
   }
   return false;
@@ -146,6 +159,7 @@ export function changeAdminPassword(currentPassword, newPassword) {
 
   // Invalidate all existing sessions for security
   adminSessions.clear();
+  clearAllAdminSessions();
 
   console.log('🔒 [SÉCURITÉ] Mot de passe administrateur modifié avec succès. Toutes les sessions actives ont été révoquées.');
   return true;
@@ -154,10 +168,26 @@ export function changeAdminPassword(currentPassword, newPassword) {
 export function isValidAdminToken(token) {
   if (!token || typeof token !== 'string') return false;
   const cleanToken = token.trim();
-  const session = adminSessions.get(cleanToken);
+  let session = adminSessions.get(cleanToken);
+
+  if (!session) {
+    // Check SQLite persistence
+    const dbSession = getAdminSession(cleanToken);
+    if (dbSession) {
+      session = {
+        token: dbSession.token,
+        ip: dbSession.client_ip,
+        createdAt: dbSession.created_at,
+        expiresAt: dbSession.expires_at
+      };
+      adminSessions.set(cleanToken, session);
+    }
+  }
+
   if (!session) return false;
   if (Date.now() > session.expiresAt) {
     adminSessions.delete(cleanToken);
+    deleteAdminSession(cleanToken);
     return false;
   }
   return true;
@@ -165,6 +195,7 @@ export function isValidAdminToken(token) {
 
 /**
  * Extracts and verifies the admin token from an incoming HTTP request.
+ * Checks Authorization header, X-Admin-Token header, Cookies, and query parameter.
  */
 export function verifyAdminRequest(req) {
   const authHeader = req.headers['authorization'];
@@ -176,6 +207,11 @@ export function verifyAdminRequest(req) {
     token = String(req.headers['x-admin-token']).trim();
   } else if (req.query?.admin_token) {
     token = String(req.query.admin_token).trim();
+  } else if (req.headers?.cookie) {
+    const match = req.headers.cookie.match(/(?:^|; )admin_token=([^;]*)/);
+    if (match && match[1]) {
+      token = decodeURIComponent(match[1]).trim();
+    }
   }
 
   return isValidAdminToken(token);
@@ -209,4 +245,5 @@ setInterval(() => {
       adminSessions.delete(token);
     }
   }
+  cleanExpiredAdminSessions();
 }, 15 * 60 * 1000);

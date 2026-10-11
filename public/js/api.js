@@ -225,6 +225,15 @@ class ApiClient {
     return headers;
   }
 
+  handleAuthFailure() {
+    sessionStorage.removeItem('easypresence_admin_token');
+    localStorage.removeItem('easypresence_admin_token');
+    store.setRole('client');
+    store.set('isAdmin', false);
+    this.sendIdentify();
+    window.app?.applyRoleToUI(false);
+  }
+
   // --- REST Requests ---
   async get(endpoint, params = {}) {
     const url = new URL(`/api${endpoint}`, window.location.origin);
@@ -239,6 +248,9 @@ class ApiClient {
     });
     const json = await res.json();
     if (!res.ok || !json.success) {
+      if (res.status === 401 && json.code === 'ADMIN_UNAUTHORIZED') {
+        this.handleAuthFailure();
+      }
       throw new Error(json.error || `Erreur serveur (${res.status})`);
     }
     return json;
@@ -252,6 +264,9 @@ class ApiClient {
     });
     const json = await res.json();
     if (!res.ok || !json.success) {
+      if (res.status === 401 && json.code === 'ADMIN_UNAUTHORIZED') {
+        this.handleAuthFailure();
+      }
       throw new Error(json.error || `Erreur serveur (${res.status})`);
     }
     return json;
@@ -318,6 +333,9 @@ class ApiClient {
     });
     const json = await res.json();
     if (!res.ok || !json.success) {
+      if (res.status === 401 && json.code === 'ADMIN_UNAUTHORIZED') {
+        this.handleAuthFailure();
+      }
       throw new Error(json.error || 'Erreur lors de l\'analyse du fichier Excel.');
     }
     return json;

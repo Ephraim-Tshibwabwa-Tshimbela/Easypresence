@@ -64,6 +64,7 @@ router.post('/auth/login', authLimiter, (req, res) => {
     }
     const realIp = getRealSocketIp(req);
     const authResult = loginAdmin(password, realIp);
+    res.setHeader('Set-Cookie', `admin_token=${encodeURIComponent(authResult.token)}; Path=/; Max-Age=43200; SameSite=Lax`);
     res.json({
       success: true,
       message: 'Authentification administrateur réussie.',
@@ -82,8 +83,12 @@ router.post('/auth/logout', (req, res) => {
     token = authHeader.substring(7).trim();
   } else if (req.headers['x-admin-token']) {
     token = String(req.headers['x-admin-token']).trim();
+  } else if (req.headers?.cookie) {
+    const match = req.headers.cookie.match(/(?:^|; )admin_token=([^;]*)/);
+    if (match && match[1]) token = decodeURIComponent(match[1]).trim();
   }
   logoutAdmin(token);
+  res.setHeader('Set-Cookie', 'admin_token=; Path=/; Max-Age=0; SameSite=Lax');
   res.json({ success: true, message: 'Déconnexion administrateur réussie.' });
 });
 

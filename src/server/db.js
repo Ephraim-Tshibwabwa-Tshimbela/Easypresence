@@ -90,6 +90,13 @@ db.exec(`
     new_rows INTEGER,
     updated_rows INTEGER
   );
+
+  CREATE TABLE IF NOT EXISTS admin_sessions (
+    token TEXT PRIMARY KEY,
+    client_ip TEXT,
+    created_at INTEGER,
+    expires_at INTEGER
+  );
 `);
 
 // Migration helper: Ensure all new columns exist if table was already created
@@ -804,6 +811,38 @@ export function setSetting(key, value) {
     INSERT INTO settings (key, value) VALUES (?, ?)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value
   `).run(key, String(value));
+}
+
+/**
+ * Admin persistent sessions helpers
+ */
+export function saveAdminSession(token, clientIp, createdAt, expiresAt) {
+  db.prepare(`
+    INSERT INTO admin_sessions (token, client_ip, created_at, expires_at)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(token) DO UPDATE SET
+      client_ip = excluded.client_ip,
+      created_at = excluded.created_at,
+      expires_at = excluded.expires_at
+  `).run(token, clientIp || '127.0.0.1', createdAt, expiresAt);
+}
+
+export function getAdminSession(token) {
+  if (!token) return null;
+  return db.prepare('SELECT * FROM admin_sessions WHERE token = ?').get(token);
+}
+
+export function deleteAdminSession(token) {
+  if (!token) return;
+  db.prepare('DELETE FROM admin_sessions WHERE token = ?').run(token);
+}
+
+export function clearAllAdminSessions() {
+  db.prepare('DELETE FROM admin_sessions').run();
+}
+
+export function cleanExpiredAdminSessions() {
+  db.prepare('DELETE FROM admin_sessions WHERE expires_at < ?').run(Date.now());
 }
 
 /**

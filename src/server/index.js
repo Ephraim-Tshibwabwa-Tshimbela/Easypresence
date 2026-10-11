@@ -49,9 +49,17 @@ app.use((req, res, next) => {
 // Rate limiting and mounting API routes
 app.use('/api', apiLimiter, routes);
 
-// Serve static frontend client
+// Serve static frontend client with smart revalidation
 const publicDir = path.resolve(__dirname, '../../public');
-app.use(express.static(publicDir));
+app.use(express.static(publicDir, {
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html') || filePath.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    }
+  }
+}));
 
 // Fallback to index.html for SPA client navigation
 app.use((req, res, next) => {
